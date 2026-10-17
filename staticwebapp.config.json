@@ -1,0 +1,28 @@
+{
+  "routes": [
+    {
+      "route": "/.auth/login/github",
+      "statusCode": 404
+    },
+    {
+      "route": "/costa-palmas/*",
+      "allowedRoles": ["costa-palmas", "admin"]
+    },
+    {
+      "route": "/*",
+      "allowedRoles": ["authenticated"]
+    }
+  ],
+  "responseOverrides": {
+    "401": {
+      "redirect": "/.auth/login/aad?post_login_redirect_uri=.referrer",
+      "statusCode": 302
+    },
+    "403": {
+      "rewrite": "/sin-acceso.html"
+    }
+  },
+  "globalHeaders": {
+    "X-Robots-Tag": "noindex, nofollow"
+  }
+}

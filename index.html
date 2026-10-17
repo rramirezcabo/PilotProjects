@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Proyectos Piloto</title>
+<style>
+  :root{--bg:#f4f6f8;--card:#fff;--ink:#1d2733;--mute:#66768a;--line:#d9e0e7;--acc:#0b6e99}
+  @media (prefers-color-scheme:dark){:root{--bg:#12171d;--card:#1b222b;--ink:#e6ebf0;--mute:#93a1b0;--line:#2c3743;--acc:#4fb3dc}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:20px 16px;max-width:960px;margin:0 auto;border-bottom:1px solid var(--line)}
+  h1{font-size:20px;margin:0}
+  .user{font-size:13px;color:var(--mute)}
+  .user a{color:var(--acc);margin-left:8px}
+  main{max-width:960px;margin:0 auto;padding:24px 16px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+  a.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;text-decoration:none;color:inherit;transition:border-color .15s}
+  a.card:hover{border-color:var(--acc)}
+  .tag{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--acc);font-weight:600}
+  .card h2{font-size:17px;margin:6px 0 4px}
+  .card p{margin:0;color:var(--mute);font-size:13.5px}
+  footer{max-width:960px;margin:0 auto;padding:16px;color:var(--mute);font-size:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Proyectos Piloto</h1>
+  <div class="user"><span id="who"></span><a href="/.auth/logout?post_logout_redirect_uri=/">Cerrar sesión</a></div>
+</header>
+<main>
+  <div class="grid">
+    <a class="card" href="/costa-palmas/geotecnia/">
+      <div class="tag">Costa Palmas</div>
+      <h2>Información Geotécnica</h2>
+      <p>Visor de sondeos, ortofoto y documentación geotécnica del proyecto.</p>
+    </a>
+  </div>
+</main>
+<footer>Acceso restringido. Solo verás los proyectos para los que tienes permiso.</footer>
+<script>
+  fetch('/.auth/me').then(function(r){return r.json()}).then(function(d){
+    if(d && d.clientPrincipal){document.getElementById('who').textContent=d.clientPrincipal.userDetails;}
+  }).catch(function(){});
+</script>
+</body>
+</html>
