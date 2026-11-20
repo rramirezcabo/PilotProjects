@@ -1,0 +1,638 @@
+<title>Volante de Collins</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: taller de máquinas — escena 3D a todo el ancho, consola de mando debajo, ficha técnica del concepto al final. Tema oscuro único y deliberado. */
+:root {
+  --bg: #11161c;          /* acero pavonado */
+  --panel: #19212a;
+  --line: #2b3742;
+  --fg: #e6e9ec;
+  --muted: #94a1ad;
+  --brass: #d6a24a;       /* latón */
+  --brass-dim: #8a6a33;
+  --doom: #d0563f;        /* óxido */
+  --ok: #6fbf8e;
+  --display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--fg); }
+body { font-family: var(--body); font-size: 15px; line-height: 1.55; }
+a { color: var(--brass); }
+a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1240px; margin: 0 auto; }
+
+header.top { padding-block: 22px 14px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 24px; }
+.eyebrow { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--brass); }
+h1 { font-family: var(--display); font-weight: 700; font-size: clamp(34px, 6vw, 58px); line-height: .95; margin: 4px 0 0; letter-spacing: .01em; text-transform: uppercase; text-wrap: balance; }
+.lede { color: var(--muted); max-width: 52ch; margin: 0; }
+
+.stage { position: relative; height: min(68vh, 640px); min-height: 380px; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: radial-gradient(ellipse at 50% 30%, #1f2933 0%, #0d1116 75%); }
+#scene { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.hud { position: absolute; left: 12px; top: 12px; display: grid; grid-template-columns: repeat(2, auto); gap: 4px 18px; font-family: var(--mono); font-size: 12px; background: rgba(13,17,22,.72); border: 1px solid var(--line); padding: 10px 12px; border-radius: 4px; pointer-events: none; font-variant-numeric: tabular-nums; }
+.hud dt { color: var(--muted); }
+.hud dd { margin: 0; text-align: right; color: var(--fg); }
+.phase { position: absolute; right: 12px; top: 12px; text-align: right; pointer-events: none; max-width: 46%; }
+.phase .tag { display: inline-block; font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 15px; padding: 3px 10px; border-radius: 3px; border: 1px solid currentColor; color: var(--muted); background: rgba(13,17,22,.72); }
+.phase .tag.build { color: var(--brass); }
+.phase .tag.break { color: var(--ok); }
+.phase .tag.doom { color: var(--doom); }
+.phase p { margin: 6px 0 0; font-size: 13px; color: var(--muted); background: rgba(13,17,22,.6); padding: 4px 8px; border-radius: 3px; }
+.meter { position: absolute; left: 12px; right: 12px; bottom: 12px; height: 8px; background: rgba(255,255,255,.06); border-radius: 4px; overflow: hidden; pointer-events: none; }
+.meter i { position: absolute; inset: 0 auto 0 0; width: 0; background: linear-gradient(90deg, var(--brass-dim), var(--brass)); border-radius: 4px; transition: width .15s linear; }
+.meter b { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--ok); }
+.flow { position: absolute; left: 12px; bottom: 28px; font-family: var(--mono); font-size: 12px; color: var(--fg); background: rgba(13,17,22,.72); border: 1px solid var(--line); padding: 6px 10px; border-radius: 4px; pointer-events: none; max-width: calc(100% - 24px); }
+.flow span { color: var(--brass); }
+
+.console { display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px; padding-block: 16px; }
+@media (max-width: 820px) { .console { grid-template-columns: 1fr; } .phase { max-width: 60%; } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 16px; min-width: 0; }
+.card h2 { font-family: var(--display); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; font-size: 18px; margin: 0 0 10px; color: var(--fg); }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+button { font-family: var(--display); font-weight: 600; font-size: 17px; letter-spacing: .06em; text-transform: uppercase; border-radius: 4px; padding: 10px 16px; cursor: pointer; border: 1px solid var(--line); background: #222c36; color: var(--fg); }
+button:hover { border-color: var(--brass-dim); }
+button.primary { background: var(--brass); color: #1a1408; border-color: var(--brass); }
+button.primary:hover { background: #e4b25c; }
+button[aria-pressed="true"] { border-color: var(--brass); color: var(--brass); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; background: transparent; font-size: 15px; padding: 8px 12px; }
+.seg button[aria-pressed="true"] { background: #2a3440; color: var(--brass); }
+.seg button.doomb[aria-pressed="true"] { color: var(--doom); }
+.hint { color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+kbd { font-family: var(--mono); font-size: 12px; border: 1px solid var(--line); border-radius: 3px; padding: 0 5px; background: #0f1419; }
+
+label.f { display: grid; grid-template-columns: 22px 1fr; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; color: var(--brass); }
+.fields { display: grid; gap: 8px; margin-top: 10px; }
+input[type=text], select { width: 100%; min-width: 0; font: inherit; font-family: var(--body); font-size: 14px; color: var(--fg); background: #0f1419; border: 1px solid var(--line); border-radius: 4px; padding: 7px 9px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.row select { width: auto; flex: 1 1 180px; }
+
+.notes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding-block: 4px 16px; }
+@media (max-width: 960px) { .notes { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 620px) { .notes { grid-template-columns: 1fr; } }
+.notes h3 { font-family: var(--display); font-weight: 600; font-size: 20px; text-transform: uppercase; letter-spacing: .04em; margin: 0 0 6px; color: var(--brass); }
+.notes p { margin: 0; color: #c9d0d6; }
+.map { width: 100%; border-collapse: collapse; font-size: 14px; }
+.map th, .map td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.map th { font-family: var(--mono); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.map td:first-child { font-family: var(--mono); color: var(--brass); white-space: nowrap; }
+.tablewrap { overflow-x: auto; }
+footer { padding-block: 8px 36px; color: var(--muted); font-size: 13px; }
+footer ul { padding-left: 18px; margin: 6px 0 0; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Jim Collins · Good to Great (2001) · Turning the Flywheel (2019)</div>
+      <h1>El volante de inercia</h1>
+    </div>
+    <p class="lede">Ningún empujón aislado lo hace girar. Cada impulso disciplinado se suma al anterior hasta que el ciclo empieza a alimentarse solo. Empújalo y compruébalo.</p>
+  </header>
+
+  <section class="stage" aria-label="Modelo 3D animado del volante">
+    <canvas id="scene"></canvas>
+    <dl class="hud">
+      <dt>Empujes</dt><dd id="hPush">0</dd>
+      <dt>Velocidad</dt><dd id="hRpm">0.0 rpm</dd>
+      <dt>Vueltas</dt><dd id="hTurns">0.00</dd>
+      <dt>Inercia</dt><dd id="hEnergy">0 kJ</dd>
+    </dl>
+    <div class="phase"><span class="tag" id="phaseTag">En reposo</span><p id="phaseTxt">El volante pesa toneladas. El primer empuje apenas lo mueve.</p></div>
+    <div class="flow" id="flow">Pulsa <span>Empujar</span> o la barra espaciadora.</div>
+    <div class="meter" aria-hidden="true"><i id="meterFill"></i><b id="meterMark"></b></div>
+  </section>
+
+  <section class="console">
+    <div class="card">
+      <h2>Mando</h2>
+      <div class="controls">
+        <button class="primary" id="btnPush">Empujar</button>
+        <button id="btnAuto" aria-pressed="false">Empuje constante</button>
+        <button id="btnStop">Frenar</button>
+        <div class="seg" role="group" aria-label="Modo">
+          <button id="mFly" aria-pressed="true">Volante</button>
+          <button id="mDoom" class="doomb" aria-pressed="false">Bucle de fatalidad</button>
+        </div>
+      </div>
+      <p class="hint"><kbd>Espacio</kbd> empuja · arrastra la escena para girar la cámara · rueda o pellizco para acercar. En modo <strong>Bucle de fatalidad</strong> la empresa cambia de programa cada pocos empujes y empuja en direcciones contrarias: el momento nunca se acumula.</p>
+    </div>
+    <div class="card">
+      <h2>Tu volante</h2>
+      <div class="row">
+        <select id="preset" aria-label="Ejemplo de volante">
+          <option value="amazon">Amazon (ejemplo de Collins)</option>
+          <option value="custom">Personalizado: escribe el tuyo</option>
+        </select>
+      </div>
+      <div class="fields" id="fields"></div>
+      <p class="hint">Collins recomienda entre 4 y 6 componentes. Cada uno debe llevar casi inevitablemente al siguiente, y el último debe cerrar el ciclo volviendo al primero.</p>
+    </div>
+  </section>
+
+  <section class="notes">
+    <div class="card"><h3>No hay un momento mágico</h3><p>Collins buscó «la única gran cosa» detrás de cada salto de buena a excelente. No la encontró: la transformación fue acumulativa, empuje tras empuje, hasta que en algún punto llegó el avance. Desde fuera parece repentino; desde dentro fue orgánico.</p></div>
+    <div class="card"><h3>El peso es un activo</h3><p>La masa que hace tan difícil arrancarlo es la misma que, una vez en marcha, lo mantiene girando. En el modelo, el volante tiene una inercia enorme y una fricción constante: los primeros empujes casi no se notan y parar cuesta momento.</p></div>
+    <div class="card"><h3>Una secuencia inevitable</h3><p>El volante no es una lista de prioridades sino un ciclo causal. El pulso dorado recorre los componentes en orden: cada uno alimenta al siguiente. Por encima del umbral verde el ciclo se refuerza solo y pierde muy poca velocidad.</p></div>
+    <div class="card"><h3>El bucle de fatalidad</h3><p>Lo contrario: programas nuevos, reestructuraciones, adquisiciones «salvadoras», cambios de rumbo cada vez que no llegan resultados. Cada cambio frena lo poco que se había ganado, y la caída alimenta otro cambio más drástico.</p></div>
+    <div class="card"><h3>El caso Amazon</h3><p>Bezos dibujó su volante con Collins en 2001: precios más bajos atraen más visitas, que atraen vendedores externos, que amplían el surtido, que reparte mejor los costes fijos, que permite bajar precios otra vez. En plena crisis de las punto-com no lo abandonó.</p></div>
+    <div class="card"><h3>Renovar y extender</h3><p>Un volante bien construido dura décadas, pero no gira solo para siempre. Collins insiste en seguir empujando con disciplina y en renovar los componentes y extenderlos a nuevas áreas, sin sustituir el ciclo por la moda del momento.</p></div>
+  </section>
+
+  <section class="card">
+    <h2>Cómo leer el modelo</h2>
+    <div class="tablewrap">
+      <table class="map">
+        <thead><tr><th>En el modelo</th><th>En el concepto de Collins</th></tr></thead>
+        <tbody>
+          <tr><td>Masa del volante</td><td>La escala y el trabajo acumulado. Hace difícil el arranque y da momento después.</td></tr>
+          <tr><td>Empujar</td><td>Una acción disciplinada, coherente con el ciclo, en la misma dirección que las anteriores.</td></tr>
+          <tr><td>Fricción</td><td>Competencia, entropía organizativa, desgaste. Si dejas de empujar, el volante pierde velocidad.</td></tr>
+          <tr><td>Umbral verde</td><td>El avance (breakthrough): los componentes se refuerzan entre sí y el ciclo casi se sostiene solo.</td></tr>
+          <tr><td>Pulso dorado</td><td>El flujo causal: el componente activo alimenta al siguiente. Cuanto más rápido gira, más rápido circula.</td></tr>
+          <tr><td>Cambio de programa</td><td>El bucle de fatalidad: cada giro de estrategia frena el volante y la falta de resultados provoca el siguiente.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Fuentes consultadas:
+    <ul>
+      <li><a href="https://www.jimcollins.com/concepts/the-flywheel.html" target="_blank" rel="noopener">Jim Collins: The Flywheel Effect</a></li>
+      <li><a href="https://www.jimcollins.com/books/turningtheflywheel.html" target="_blank" rel="noopener">Jim Collins: Turning the Flywheel</a></li>
+      <li><a href="https://www.shortform.com/blog/flywheel-and-doom-loop/" target="_blank" rel="noopener">Shortform: Flywheel and Doom Loop</a></li>
+      <li><a href="https://litcharts.com/lit/good-to-great/chapter-8" target="_blank" rel="noopener">LitCharts: Good to Great, capítulo 8</a></li>
+    </ul>
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  const PRESETS = {
+    amazon: [
+      "Precios más bajos en más productos",
+      "Más visitas de clientes",
+      "Más vendedores externos",
+      "Mayor surtido y mejor experiencia",
+      "Más ingresos por cada coste fijo"
+    ],
+    custom: [
+      "Entender a fondo al cliente",
+      "Producto claramente mejor",
+      "Clientes que repiten y recomiendan",
+      "Más ingresos y escala",
+      "Reinversión en talento y producto"
+    ]
+  };
+  const DOOM_PROGRAMS = [
+    ["Nuevo plan estratégico", "Reestructuración", "Programa de cambio", "Nueva visión", "Recorte de costes"],
+    ["Adquisición salvadora", "Nuevo CEO estrella", "Despidos", "Cambio de mercado", "Rebranding"],
+    ["Transformación digital", "Consultora externa", "Nueva matriz", "Fusión de áreas", "Giro de producto"],
+    ["Campaña de choque", "Reorganización", "Nueva tecnología", "Programa motivacional", "Vuelta a lo anterior"]
+  ];
+
+  let store = null;
+  try { store = window.localStorage; } catch (e) { store = null; }
+  function load(k) { try { return store ? store.getItem(k) : null; } catch (e) { return null; } }
+  function save(k, v) { try { store && store.setItem(k, v); } catch (e) {} }
+
+  const state = {
+    mode: "fly",
+    preset: load("fw.preset") || "amazon",
+    labels: null,
+    omega: 0,          // rad/s, positivo = sentido horario
+    angle: 0,
+    pushes: 0,
+    auto: false,
+    autoT: 0,
+    pulse: 0,          // posición del pulso causal en el marco del volante (rad)
+    activeIdx: -1,
+    doomProgram: 0,
+    doomCount: 0,
+    ramT: 1,
+    ramDir: 1
+  };
+  try {
+    const c = JSON.parse(load("fw.custom") || "null");
+    if (Array.isArray(c) && c.length === 5) PRESETS.custom = c.map(String);
+  } catch (e) {}
+  if (!PRESETS[state.preset]) state.preset = "amazon";
+  state.labels = PRESETS[state.preset].slice();
+
+  // ---------- Física ----------
+  const OMEGA_MAX = 6.0;       // ≈ 57 rpm
+  const OMEGA_BREAK = 2.6;     // umbral de avance ≈ 25 rpm
+  const PUSH = 0.12;
+  const COULOMB = 0.03;
+  const VISC = 0.03;
+  const MOI = 5200;            // kg·m² (volante de acero ~4 t, r = 1.6 m)
+
+  // ---------- Three.js ----------
+  const canvas = document.getElementById("scene");
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.setClearColor(0x000000, 0);
+
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x0d1116, 18, 40);
+  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+  camera.position.set(5.5, 3.2, 11);
+
+  const controls = new THREE.OrbitControls(camera, canvas);
+  controls.target.set(0, 3.3, 0);
+  controls.enableDamping = true;
+  controls.minDistance = 6;
+  controls.maxDistance = 22;
+  controls.maxPolarAngle = Math.PI * 0.52;
+  controls.enablePan = false;
+
+  scene.add(new THREE.HemisphereLight(0xcfd8e3, 0x1a1410, 0.55));
+  const key = new THREE.DirectionalLight(0xfff1dc, 1.15);
+  key.position.set(6, 11, 8);
+  key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048);
+  Object.assign(key.shadow.camera, { left: -9, right: 9, top: 9, bottom: -9, near: 1, far: 40 });
+  scene.add(key);
+  const rim = new THREE.DirectionalLight(0x7fa6c9, 0.6);
+  rim.position.set(-8, 5, -6);
+  scene.add(rim);
+  const glow = new THREE.PointLight(0xd6a24a, 0, 8);
+  glow.position.set(0, 3.3, 2.4);
+  scene.add(glow);
+
+  // Suelo
+  const floor = new THREE.Mesh(new THREE.CircleGeometry(14, 64), new THREE.MeshStandardMaterial({ color: 0x161c22, roughness: 0.95, metalness: 0.05 }));
+  floor.rotation.x = -Math.PI / 2;
+  floor.receiveShadow = true;
+  scene.add(floor);
+  const grid = new THREE.GridHelper(28, 28, 0x2b3742, 0x1e262e);
+  grid.position.y = 0.005;
+  scene.add(grid);
+
+  const R = 2.6, T = 0.8, AXLE_Y = 3.3;
+  const steel = new THREE.MeshStandardMaterial({ color: 0x59636d, metalness: 0.75, roughness: 0.38 });
+  const darkSteel = new THREE.MeshStandardMaterial({ color: 0x2f363d, metalness: 0.7, roughness: 0.5 });
+  const brass = new THREE.MeshStandardMaterial({ color: 0xc8963f, metalness: 0.85, roughness: 0.3, emissive: 0x000000 });
+
+  // Bancada
+  const base = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.4, 2.6), darkSteel);
+  base.position.y = 0.2; base.castShadow = base.receiveShadow = true; scene.add(base);
+  [-1, 1].forEach(function (s) {
+    const z = s * (T / 2 + 0.55);
+    const post = new THREE.Mesh(new THREE.BoxGeometry(0.2, AXLE_Y - 0.2, 0.26), darkSteel);
+    post.position.set(0, (AXLE_Y - 0.2) / 2 + 0.2, z);
+    post.castShadow = true; scene.add(post);
+    const foot = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.25, 0.4), darkSteel);
+    foot.position.set(0, 0.52, z); foot.castShadow = true; scene.add(foot);
+    const bearing = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 0.4, 32), steel);
+    bearing.rotation.x = Math.PI / 2;
+    bearing.position.set(0, AXLE_Y, z);
+    bearing.castShadow = true; scene.add(bearing);
+  });
+  const axle = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, T + 1.7, 24), steel);
+  axle.rotation.x = Math.PI / 2; axle.position.y = AXLE_Y; scene.add(axle);
+
+  // Volante
+  const wheel = new THREE.Group();
+  wheel.position.y = AXLE_Y;
+  scene.add(wheel);
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(R, R, T, 96, 1, false), steel);
+  body.rotation.x = Math.PI / 2; body.castShadow = true; body.receiveShadow = true;
+  wheel.add(body);
+  const rimRing = new THREE.Mesh(new THREE.TorusGeometry(R, 0.09, 16, 128), brass);
+  rimRing.position.z = T / 2; wheel.add(rimRing);
+  const rimRingB = rimRing.clone(); rimRingB.position.z = -T / 2; wheel.add(rimRingB);
+  // Ranuras del canto: dan sensación de giro
+  for (let i = 0; i < 40; i++) {
+    const g = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.04, T * 0.86), darkSteel);
+    const a = (i / 40) * Math.PI * 2;
+    g.position.set(Math.cos(a) * (R + 0.005), Math.sin(a) * (R + 0.005), 0);
+    g.rotation.z = a;
+    wheel.add(g);
+  }
+  const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.55, T + 0.5, 40), brass);
+  hub.rotation.x = Math.PI / 2; hub.castShadow = true; wheel.add(hub);
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    [1, -1].forEach(function (s) {
+      const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.12, 6), darkSteel);
+      bolt.rotation.x = Math.PI / 2;
+      bolt.position.set(Math.cos(a) * 0.34, Math.sin(a) * 0.34, s * (T / 2 + 0.28));
+      wheel.add(bolt);
+    });
+  }
+
+  // Cara frontal y trasera con los componentes
+  const faceCanvas = document.createElement("canvas");
+  faceCanvas.width = faceCanvas.height = 1536;
+  const fctx = faceCanvas.getContext("2d");
+  const faceTex = new THREE.CanvasTexture(faceCanvas);
+  faceTex.encoding = THREE.sRGBEncoding;
+  faceTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  const faceMat = new THREE.MeshStandardMaterial({ map: faceTex, metalness: 0.35, roughness: 0.55, emissiveMap: faceTex, emissive: 0x000000 });
+  const faceF = new THREE.Mesh(new THREE.CircleGeometry(R - 0.02, 128), faceMat);
+  faceF.position.z = T / 2 + 0.004; wheel.add(faceF);
+  const faceB = new THREE.Mesh(new THREE.CircleGeometry(R - 0.02, 128), faceMat);
+  faceB.position.z = -T / 2 - 0.004; faceB.rotation.y = Math.PI; wheel.add(faceB);
+
+  function wrapText(ctx, text, maxW) {
+    const words = text.split(/\s+/); const lines = []; let cur = "";
+    words.forEach(function (w) {
+      const t = cur ? cur + " " + w : w;
+      if (ctx.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t;
+    });
+    if (cur) lines.push(cur);
+    return lines.slice(0, 3);
+  }
+
+  function drawFace() {
+    const S = faceCanvas.width, c = S / 2, rr = S / 2;
+    const doom = state.mode === "doom";
+    const labels = doom ? DOOM_PROGRAMS[state.doomProgram] : state.labels;
+    const n = labels.length, seg = (Math.PI * 2) / n;
+    const ctx = fctx;
+    ctx.clearRect(0, 0, S, S);
+    // fondo de acero cepillado
+    const g = ctx.createRadialGradient(c, c, rr * 0.1, c, c, rr);
+    g.addColorStop(0, "#4a535c"); g.addColorStop(1, "#2a3138");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, S, S);
+    ctx.globalAlpha = 0.08; ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1;
+    for (let r = rr * 0.2; r < rr; r += 7) { ctx.beginPath(); ctx.arc(c, c, r, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.globalAlpha = 1;
+
+    const r0 = rr * 0.5, r1 = rr * 0.95, gap = 0.06;
+    for (let i = 0; i < n; i++) {
+      // ángulo θ medido en sentido horario desde arriba → ángulo de canvas = θ - π/2
+      const a0 = i * seg + gap / 2 - Math.PI / 2, a1 = (i + 1) * seg - gap / 2 - Math.PI / 2;
+      const active = i === state.activeIdx;
+      ctx.beginPath();
+      ctx.arc(c, c, r1, a0, a1); ctx.arc(c, c, r0, a1, a0, true); ctx.closePath();
+      if (doom) ctx.fillStyle = active ? "#c4523c" : "#5b2e27";
+      else ctx.fillStyle = active ? "#f0b856" : "#7a5c2c";
+      ctx.fill();
+      ctx.lineWidth = 6; ctx.strokeStyle = doom ? "#2a1512" : "#2a1f0e"; ctx.stroke();
+
+      // número + texto
+      const mid = (i + 0.5) * seg;
+      ctx.save();
+      ctx.translate(c, c); ctx.rotate(mid);
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillStyle = active ? "#1a1408" : (doom ? "#f2d5ce" : "#f6e6c6");
+      ctx.font = "700 64px 'Barlow Condensed', 'Arial Narrow', sans-serif";
+      ctx.fillText(String(i + 1), 0, -rr * 0.875);
+      ctx.font = "600 50px 'IBM Plex Sans', system-ui, sans-serif";
+      const lines = wrapText(ctx, labels[i], rr * 0.62);
+      const lh = 56, top = -rr * 0.70 - ((lines.length - 1) * lh) / 2 + 8;
+      lines.forEach(function (ln, k) { ctx.fillText(ln, 0, top + k * lh); });
+      ctx.restore();
+
+      // flecha en el hueco hacia el siguiente componente
+      const ag = (i + 1) * seg - Math.PI / 2, ar = (r0 + r1) / 2;
+      const dir = doom ? (i % 2 ? -1 : 1) : 1;
+      ctx.save();
+      ctx.translate(c + Math.cos(ag) * ar, c + Math.sin(ag) * ar);
+      ctx.rotate(ag + (dir > 0 ? Math.PI / 2 : -Math.PI / 2));
+      ctx.fillStyle = doom ? "#e0715c" : "#ffd88a";
+      ctx.beginPath(); ctx.moveTo(26, 0); ctx.lineTo(-16, -24); ctx.lineTo(-16, 24); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+    // anillo interior y lema
+    ctx.beginPath(); ctx.arc(c, c, r0 - 18, 0, Math.PI * 2);
+    ctx.lineWidth = 4; ctx.strokeStyle = doom ? "#8a3b2f" : "#b8893d"; ctx.stroke();
+    ctx.fillStyle = doom ? "#e3a090" : "#e9cf9c";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = "600 44px 'Barlow Condensed', 'Arial Narrow', sans-serif";
+    ctx.fillText(doom ? "BUCLE DE FATALIDAD" : "VOLANTE", c, c - rr * 0.33);
+    ctx.font = "500 34px 'IBM Plex Mono', monospace";
+    ctx.fillText(doom ? "programa " + (state.doomProgram + 1) : (state.preset === "amazon" ? "amazon.com · 2001" : "tu empresa"), c, c + rr * 0.33);
+    faceTex.needsUpdate = true;
+  }
+
+  // Ariete de empuje (en el lado izquierdo, donde el canto sube en sentido horario)
+  const ram = new THREE.Group();
+  const ramPad = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.7, T * 0.9), brass);
+  const ramRod = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 1.6, 16), steel);
+  ramRod.rotation.z = Math.PI / 2; ramRod.position.x = -0.95;
+  ram.add(ramPad); ram.add(ramRod);
+  ram.position.set(-R - 0.2, AXLE_Y, 0);
+  ramPad.castShadow = true;
+  scene.add(ram);
+  const ramCyl = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 1.0, 20), darkSteel);
+  ramCyl.rotation.z = Math.PI / 2; ramCyl.position.set(-R - 1.9, AXLE_Y, 0); ramCyl.castShadow = true;
+  scene.add(ramCyl);
+  const ramPost = new THREE.Mesh(new THREE.BoxGeometry(0.3, AXLE_Y - 0.2, 0.3), darkSteel);
+  ramPost.position.set(-R - 2.1, (AXLE_Y - 0.2) / 2 + 0.2, 0); ramPost.castShadow = true; scene.add(ramPost);
+
+  // Chispas
+  const SP = 60;
+  const spGeo = new THREE.BufferGeometry();
+  const spPos = new Float32Array(SP * 3), spVel = new Float32Array(SP * 3), spLife = new Float32Array(SP);
+  spGeo.setAttribute("position", new THREE.BufferAttribute(spPos, 3));
+  const sparks = new THREE.Points(spGeo, new THREE.PointsMaterial({ color: 0xffc46b, size: 0.07, transparent: true, opacity: 0.95, depthWrite: false }));
+  scene.add(sparks);
+  for (let i = 0; i < SP; i++) spPos[i * 3 + 1] = -100;
+  function burst(dir) {
+    for (let i = 0; i < SP; i++) {
+      spPos[i * 3] = -R - 0.05; spPos[i * 3 + 1] = AXLE_Y + (Math.random() - 0.5) * 0.5; spPos[i * 3 + 2] = (Math.random() - 0.5) * T;
+      spVel[i * 3] = -Math.random() * 2.2; spVel[i * 3 + 1] = dir * (1 + Math.random() * 3); spVel[i * 3 + 2] = (Math.random() - 0.5) * 2.5;
+      spLife[i] = 0.4 + Math.random() * 0.5;
+    }
+  }
+
+  // ---------- Interacción ----------
+  const $ = function (id) { return document.getElementById(id); };
+  const ui = {
+    push: $("hPush"), rpm: $("hRpm"), turns: $("hTurns"), energy: $("hEnergy"),
+    tag: $("phaseTag"), txt: $("phaseTxt"), flow: $("flow"), fill: $("meterFill"), mark: $("meterMark")
+  };
+  ui.mark.style.left = (OMEGA_BREAK / OMEGA_MAX * 100) + "%";
+
+  function push() {
+    let dir = 1;
+    if (state.mode === "doom") {
+      dir = Math.random() < 0.45 ? -1 : 1;
+      state.doomCount++;
+      if (state.doomCount % 4 === 0) {
+        state.doomProgram = (state.doomProgram + 1) % DOOM_PROGRAMS.length;
+        state.omega *= 0.25;
+        flash = 1.0;
+        drawFace();
+      }
+    }
+    state.omega = Math.max(-OMEGA_MAX, Math.min(OMEGA_MAX, state.omega + dir * PUSH));
+    state.pushes++;
+    state.ramT = 0; state.ramDir = dir;
+    burst(dir);
+  }
+  let flash = 0;
+
+  $("btnPush").addEventListener("click", push);
+  $("btnAuto").addEventListener("click", function () {
+    state.auto = !state.auto; this.setAttribute("aria-pressed", String(state.auto));
+    this.textContent = state.auto ? "Detener empuje" : "Empuje constante";
+  });
+  $("btnStop").addEventListener("click", function () { state.omega *= 0.1; state.auto = false; const b = $("btnAuto"); b.setAttribute("aria-pressed", "false"); b.textContent = "Empuje constante"; });
+  function setMode(m) {
+    state.mode = m;
+    $("mFly").setAttribute("aria-pressed", String(m === "fly"));
+    $("mDoom").setAttribute("aria-pressed", String(m === "doom"));
+    state.doomCount = 0; state.activeIdx = -1;
+    drawFace();
+  }
+  $("mFly").addEventListener("click", function () { setMode("fly"); });
+  $("mDoom").addEventListener("click", function () { setMode("doom"); });
+  window.addEventListener("keydown", function (e) {
+    if (e.code === "Space" && !/INPUT|SELECT|TEXTAREA|BUTTON/.test(document.activeElement.tagName)) { e.preventDefault(); push(); }
+  });
+
+  const presetSel = $("preset"), fields = $("fields");
+  presetSel.value = state.preset;
+  function renderFields() {
+    fields.innerHTML = "";
+    state.labels.forEach(function (lab, i) {
+      const l = document.createElement("label"); l.className = "f";
+      const num = document.createElement("span"); num.textContent = String(i + 1);
+      const inp = document.createElement("input"); inp.type = "text"; inp.id = "comp" + i; inp.value = lab; inp.maxLength = 48;
+      inp.disabled = state.preset !== "custom";
+      inp.addEventListener("input", function () {
+        state.labels[i] = inp.value || "—";
+        PRESETS.custom = state.labels.slice();
+        save("fw.custom", JSON.stringify(PRESETS.custom));
+        if (state.mode === "fly") drawFace();
+      });
+      l.appendChild(num); l.appendChild(inp); fields.appendChild(l);
+    });
+  }
+  presetSel.addEventListener("change", function () {
+    state.preset = presetSel.value; save("fw.preset", state.preset);
+    state.labels = PRESETS[state.preset].slice();
+    renderFields(); if (state.mode === "fly") drawFace();
+  });
+
+  // ---------- Bucle ----------
+  function resize() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.position.setLength(w < 600 ? 15 : 12.5);
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener("resize", resize);
+
+  const clock = new THREE.Clock();
+  let hudT = 0;
+  function frame() {
+    const dt = Math.min(clock.getDelta(), 0.05);
+    const doom = state.mode === "doom";
+
+    if (state.auto) {
+      state.autoT += dt;
+      if (state.autoT > 0.7) { state.autoT = 0; push(); }
+    }
+
+    // fricción + auto-refuerzo del ciclo por encima del umbral
+    const w = state.omega, aw = Math.abs(w), sgn = Math.sign(w);
+    const feed = (!doom && aw > OMEGA_BREAK) ? VISC * 0.97 : 0;
+    let dec = (COULOMB + (VISC - feed) * aw) * dt;
+    if (dec >= aw) state.omega = 0; else state.omega = w - sgn * dec;
+    state.angle += state.omega * dt;
+    wheel.rotation.z = -state.angle;
+
+    // pulso causal: viaja en el sentido de las flechas dentro del volante
+    if (!doom && aw > 0.02) {
+      state.pulse += (0.6 * aw + 0.4) * dt;
+      const n = state.labels.length;
+      const idx = Math.floor((state.pulse % (Math.PI * 2)) / (Math.PI * 2 / n));
+      if (idx !== state.activeIdx) { state.activeIdx = idx; drawFace(); }
+    } else if (state.activeIdx !== -1 && aw <= 0.02) { state.activeIdx = -1; drawFace(); }
+
+    // ariete
+    if (state.ramT < 1) {
+      state.ramT = Math.min(1, state.ramT + dt * 2.6);
+      const k = Math.sin(state.ramT * Math.PI);
+      ram.position.y = AXLE_Y + state.ramDir * k * 0.7;
+      ram.position.x = -R - 0.2 + k * 0.06;
+    }
+
+    // chispas
+    for (let i = 0; i < SP; i++) {
+      if (spLife[i] > 0) {
+        spLife[i] -= dt;
+        spVel[i * 3 + 1] -= 9 * dt;
+        spPos[i * 3] += spVel[i * 3] * dt; spPos[i * 3 + 1] += spVel[i * 3 + 1] * dt; spPos[i * 3 + 2] += spVel[i * 3 + 2] * dt;
+        if (spLife[i] <= 0) spPos[i * 3 + 1] = -100;
+      }
+    }
+    spGeo.attributes.position.needsUpdate = true;
+
+    // brillo según la velocidad
+    const ratio = Math.min(1, aw / OMEGA_MAX);
+    const broke = !doom && aw > OMEGA_BREAK;
+    glow.intensity = ratio * 2.2 + flash * 3;
+    glow.color.setHex(doom ? 0xd0563f : (broke ? 0xf0c060 : 0xd6a24a));
+    faceMat.emissive.setScalar(0.12 + ratio * 0.35 + flash * 0.3);
+    flash = Math.max(0, flash - dt * 2.5);
+
+    hudT += dt;
+    if (hudT > 0.1) { hudT = 0; updateHud(aw, broke, doom); }
+
+    controls.update();
+    renderer.render(scene, camera);
+    requestAnimationFrame(frame);
+  }
+
+  function updateHud(aw, broke, doom) {
+    const rpm = aw * 60 / (Math.PI * 2);
+    ui.push.textContent = state.pushes;
+    ui.rpm.textContent = rpm.toFixed(1) + " rpm";
+    ui.turns.textContent = (Math.abs(state.angle) / (Math.PI * 2)).toFixed(2);
+    ui.energy.textContent = Math.round(0.5 * MOI * aw * aw / 1000 * 10) / 10 + " kJ";
+    ui.fill.style.width = Math.min(100, aw / OMEGA_MAX * 100) + "%";
+    ui.fill.style.background = doom ? "linear-gradient(90deg,#6b2c22,#d0563f)" : "";
+
+    let tag, cls, txt;
+    if (doom) {
+      tag = "Bucle de fatalidad"; cls = "doom";
+      txt = "Programa " + (state.doomProgram + 1) + ": «" + DOOM_PROGRAMS[state.doomProgram][0] + "». Cada cambio de rumbo frena lo ganado.";
+    } else if (aw < 0.02) {
+      tag = "En reposo"; cls = ""; txt = state.pushes ? "Has parado de empujar y la fricción se ha comido el momento." : "El volante pesa toneladas. El primer empuje apenas lo mueve.";
+    } else if (aw < OMEGA_BREAK * 0.45) {
+      tag = "Arranque"; cls = "build"; txt = "Mucho esfuerzo, poco movimiento visible. Sigue empujando en la misma dirección.";
+    } else if (!broke) {
+      tag = "Acumulación"; cls = "build"; txt = "Cada vuelta se apoya en la anterior. El umbral de avance está cerca.";
+    } else {
+      tag = "Avance"; cls = "break"; txt = "Los componentes se refuerzan entre sí: el ciclo casi se sostiene solo. Sigue empujando para acelerar.";
+    }
+    ui.tag.textContent = tag; ui.tag.className = "tag " + cls; ui.txt.textContent = txt;
+
+    if (doom) ui.flow.innerHTML = "Sin secuencia: <span>cada programa tira en otra dirección</span>";
+    else if (state.activeIdx >= 0) {
+      const n = state.labels.length, a = state.activeIdx, b = (a + 1) % n;
+      ui.flow.textContent = "";
+      const s1 = document.createElement("span"); s1.textContent = (a + 1) + " " + state.labels[a];
+      const s2 = document.createElement("span"); s2.textContent = (b + 1) + " " + state.labels[b];
+      ui.flow.append(s1, document.createTextNode(" → alimenta → "), s2);
+    } else ui.flow.innerHTML = "Pulsa <span>Empujar</span> o la barra espaciadora.";
+  }
+
+  renderFields();
+  drawFace();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawFace);
+  resize();
+  // arranca con unos empujes para que la escena se vea en marcha
+  for (let i = 0; i < 6; i++) state.omega += PUSH;
+  state.pushes = 6;
+  frame();
+})();
+</script>
